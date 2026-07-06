@@ -23,12 +23,15 @@ const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 
 // ─── Objects ─────────────────────────────────────────────────────────────────
-const geometry = new THREE.PlaneGeometry(1, 1);
+const geometry = new THREE.PlaneGeometry(1, 1, 32, 32);
 const material = new THREE.ShaderMaterial({
     vertexShader: `
+
+    uniform float uTime;
+
     void main(){
       vec3 pos = position;
-      pos.z += pos.y;
+      pos.z += sin(pos.x * 10.0 + uTime);
       gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
     }
     `,
@@ -38,8 +41,14 @@ const material = new THREE.ShaderMaterial({
        }
     `,
 
+    uniforms:{
+        uTime : {value : 0},
+    },
+
+
 })
 const mesh = new THREE.Mesh(geometry, material);
+mesh.rotation.x = -Math.PI * 0.3;
 scene.add(mesh);
 
 // ─── Lights ──────────────────────────────────────────────────────────────────
@@ -66,10 +75,9 @@ window.addEventListener('resize', () => {
 const clock = new THREE.Clock();
 
 function animate() {
-    const elapsed = clock.getElapsedTime();
+    const delta = clock.getDelta();
 
-    mesh.rotation.x = elapsed * 0.3;
-    mesh.rotation.y = elapsed * 0.5;
+    material.uniforms.uTime.value += delta;
 
     controls.update();
     renderer.render(scene, camera);
